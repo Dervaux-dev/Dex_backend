@@ -22,4 +22,4 @@ router.get('/admin/:id', auth, adminAuth, getQuizAdmin);
 router.put('/:id', auth, adminAuth, updateQuiz);
 
 module.exports = router;
-</content>
+
