@@ -190,4 +190,4 @@ module.exports = {
   submitQuiz,
   getQuizResults,
 };
-</content>
+
