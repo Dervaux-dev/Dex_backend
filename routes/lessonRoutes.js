@@ -19,4 +19,3 @@ router.get('/:id/pdf', auth, getLessonPdf);
 router.post('/upload', auth, adminAuth, upload.single('pdf'), uploadLesson);
 
 module.exports = router;
-</content>
