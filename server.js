@@ -78,7 +78,7 @@ app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
 // Dynamic sitemap.xml that includes real course URLs
 app.get('/sitemap.xml', async (req, res, next) => {
   try {
-    const baseUrl = process.env.FRONTEND_URL || 'https://dexelearning.vercel-app';
+    const baseUrl = process.env.FRONTEND_URL || 'https://dexelearning.vercel.app';
 
     // Static routes to include in the sitemap
     const staticUrls = [
