@@ -38,12 +38,12 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 20 * 1024 * 102
 // Admin uploads a PDF lesson; AI extracts text + summary
 const uploadLesson = async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No PDF file uploaded' });
-    }
-    const { courseId, chapter, title } = req.body;
+    const { courseId, chapter, title, pdfUrl } = req.body;
     if (!courseId || !chapter || !title) {
       return res.status(400).json({ success: false, message: 'courseId, chapter, and title are required' });
+    }
+    if (!req.file && !pdfUrl) {
+      return res.status(400).json({ success: false, message: 'Please upload a PDF file or provide a PDF URL' });
     }
 
     const course = await Course.findById(courseId);
@@ -57,9 +57,15 @@ const uploadLesson = async (req, res, next) => {
       return res.status(400).json({ success: false, message: `Chapter ${chapter} already exists for this course` });
     }
 
-    // Extract text from PDF
-    const filePath = req.file.path;
-    const rawText = await extractTextFromPdf(fs.readFileSync(filePath));
+    let rawText = '';
+    let filePath = '';
+
+    if (req.file) {
+      filePath = req.file.path;
+      rawText = await extractTextFromPdf(fs.readFileSync(filePath));
+    } else if (pdfUrl) {
+      rawText = `External PDF reference: ${pdfUrl}`;
+    }
 
     // Generate AI summary
     const summary = await generateSummary(rawText);
@@ -68,8 +74,9 @@ const uploadLesson = async (req, res, next) => {
       course: courseId,
       chapter: Number(chapter),
       title,
-      pdfFile: req.file.originalname,
-      pdfPath: path.basename(filePath),
+      pdfFile: req.file ? req.file.originalname : '',
+      pdfPath: req.file ? path.basename(filePath) : '',
+      pdfUrl: pdfUrl || '',
       summary,
       rawText,
     });
