@@ -16,7 +16,7 @@ const quizRoutes = require('./routes/quizRoutes');
 const Course = require('./models/courseModel');
 
 const app = express();
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173'||'http://localhost:5000'||'https://dexelearning.vercel.app/').split(',').map((origin) => origin.trim()).filter(Boolean);
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5000,https://dexelearning.vercel.app').split(',').map((origin) => origin.trim().replace(/\/+$/, '')).filter(Boolean);
 
 // Security middleware. Disable CSP for local development so browser/devtools requests
 // are not blocked by overstrict headers.
