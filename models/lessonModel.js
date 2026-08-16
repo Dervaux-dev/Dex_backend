@@ -24,6 +24,10 @@ const lessonSchema = new mongoose.Schema({
     type: String,
     default: '', // stored path relative to /uploads
   },
+  pdfUrl: {
+    type: String,
+    default: '', // external PDF URL, e.g. phone-hosted or shared link
+  },
   summary: {
     type: String,
     default: '',
