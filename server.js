@@ -29,6 +29,9 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
   //contentSecurityPolicy: false,
 //}));
 
+// Handle OPTIONS preflight requests explicitly to avoid rate limiting
+app.options('*', cors());
+
 // Enable CORS for your frontend origin
 app.use(cors({
   origin: (origin, callback) => {
@@ -41,12 +44,20 @@ app.use(cors({
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count'],
+  maxAge: 86400,
 }));
 
 // Rate limiting to prevent brute force and DoS attacks
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100
+  max: 500,
+  keyGenerator: (req) => {
+    return req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  },
+  skip: (req) => req.method === 'OPTIONS',
 });
 app.use(limiter);
 
