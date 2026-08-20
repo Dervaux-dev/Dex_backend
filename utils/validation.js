@@ -22,7 +22,6 @@ const validateUserRegistration = [
 
   body('email')
     .isEmail()
-    .normalizeEmail()
     .withMessage('Please provide a valid email'),
 
   body('password')

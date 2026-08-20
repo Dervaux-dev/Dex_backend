@@ -13,6 +13,7 @@ const userRoutes = require('./routes/userRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const lessonRoutes = require('./routes/lessonRoutes');
 const quizRoutes = require('./routes/quizRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const Course = require('./models/courseModel');
 
 const app = express();
@@ -60,6 +61,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/quizzes', quizRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve uploaded PDF files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

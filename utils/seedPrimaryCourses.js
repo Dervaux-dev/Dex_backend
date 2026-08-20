@@ -17,6 +17,7 @@ const sampleCourses = [
     description: 'Learn basic addition, subtraction, shapes, and numbers up to 100 with interactive visual games.',
     gradeLevel: 'Primary 1',
     category: 'mathematics',
+    docsUrl:'',
     level: 'beginner',
     price: 0,
     thumbnailEmoji: '🔢',
