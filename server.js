@@ -29,18 +29,18 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
   //contentSecurityPolicy: false,
 //}));
 
-// Handle OPTIONS preflight requests explicitly to avoid rate limiting
-app.options('*', cors());
-
-// Enable CORS for your frontend origin
+// Enable CORS for your frontend origin (handles both preflight OPTIONS and regular requests)
 app.use(cors({
   origin: (origin, callback) => {
-    const normalizedOrigin = origin ? origin.replace(/\/+$/, '') : origin;
-    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
-      callback(null, true);
+    if (!origin) {
+      callback(null, false);
       return;
     }
-
+    const normalizedOrigin = origin.replace(/\/+$/, '');
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      callback(null, normalizedOrigin);
+      return;
+    }
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
