@@ -32,6 +32,14 @@ const lessonSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  // Structured AI study notes for a polished learning presentation
+  studyNotes: {
+    overview: { type: String, default: '' },
+    keyPoints: { type: [String], default: [] },
+    vocabulary: { type: [{ term: String, definition: String }], default: [] },
+    keyFacts: { type: [String], default: [] },
+    _id: false,
+  },
   rawText: {
     type: String,
     default: '', // extracted text from PDF (used for AI generation)
