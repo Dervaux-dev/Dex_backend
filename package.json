@@ -10,6 +10,8 @@
     "seed:courses": "node utils/seedPrimaryCourses.js",
     "seed:pdfs": "node utils/seedPdfCourses.js",
     "seed:quizzes": "node utils/seedQuizzes.js",
+    "fix:quizzes": "node utils/fixQuizzes.js",
+    "notes:backfill": "node utils/backfillStudyNotes.js",
     "test": "jest"
   },
   "dependencies": {

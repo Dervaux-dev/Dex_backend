@@ -7,6 +7,7 @@ const Course = require('../models/courseModel');
 const {
   extractTextFromPdf,
   generateSummary,
+  generateStudyNotes,
 } = require('../services/aiService');
 
 // Ensure uploads dir exists
@@ -67,8 +68,9 @@ const uploadLesson = async (req, res, next) => {
       rawText = `External PDF reference: ${pdfUrl}`;
     }
 
-    // Generate AI summary
+    // Generate AI summary + structured study notes
     const summary = await generateSummary(rawText);
+    const studyNotes = await generateStudyNotes(rawText);
 
     const lesson = await Lesson.create({
       course: courseId,
@@ -78,6 +80,7 @@ const uploadLesson = async (req, res, next) => {
       pdfPath: req.file ? path.basename(filePath) : '',
       pdfUrl: pdfUrl || '',
       summary,
+      studyNotes,
       rawText,
     });
 
