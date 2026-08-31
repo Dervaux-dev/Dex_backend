@@ -1,18 +1,22 @@
-// AI service for generating summaries and quizzes using OpenAI.
-// Falls back to a local heuristic summarizer if no OPENAI_API_KEY is set.
+// AI service for generating summaries and quizzes using Google Gemini.
+// Falls back to a local heuristic summarizer/quiz generator if no GEMINI_API_KEY is set.
 const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
 
-// Load OpenAI dynamically so the app works even if the package isn't installed yet.
-let OpenAI = null;
+// Load the Gemini SDK dynamically so the app still works even if it isn't installed.
+let GoogleGenAI = null;
 try {
-  ({ OpenAI } = require('openai'));
+  ({ GoogleGenAI } = require('@google/genai'));
 } catch (e) {
-  OpenAI = null;
+  GoogleGenAI = null;
 }
 
-const hasOpenAI = () => Boolean(process.env.OPENAI_API_KEY && OpenAI);
+const hasGemini = () => Boolean(process.env.GEMINI_API_KEY && GoogleGenAI);
+
+const getModel = () => process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+
+const getClient = () => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Extract text from a PDF buffer
 const extractTextFromPdf = async (buffer) => {
@@ -25,7 +29,7 @@ const extractTextFromPdf = async (buffer) => {
   }
 };
 
-// Local fallback summarizer (used when no OpenAI key is present)
+// Local fallback summarizer (used when no Gemini key is present)
 const localSummarize = (text) => {
   const cleaned = text.replace(/\s+/g, ' ').trim();
   if (!cleaned) return 'No content available for this lesson.';
@@ -57,55 +61,69 @@ const localGenerateQuiz = (text) => {
   return questions;
 };
 
-// Generate a readable summary from lesson text using OpenAI (or fallback)
+// Generate a readable summary from lesson text using Gemini (or fallback)
 const generateSummary = async (text) => {
-  if (!hasOpenAI()) {
+  if (!hasGemini()) {
     return localSummarize(text);
   }
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert educator. Summarize the given lesson content into clear, concise study notes suitable for an e-learning platform. Use bullet points and short paragraphs. Keep it under 300 words.',
-        },
-        { role: 'user', content: text.slice(0, 12000) },
-      ],
-      temperature: 0.4,
+    const response = await getClient().models.generateContent({
+      model: getModel(),
+      contents: text.slice(0, 12000),
+      config: {
+        systemInstruction:
+          'You are an expert educator. Summarize the given lesson content into clear, concise study notes suitable for an e-learning platform. Use bullet points and short paragraphs. Keep it under 300 words.',
+        temperature: 0.4,
+      },
     });
-    return response.choices[0]?.message?.content?.trim() || localSummarize(text);
+    const summary = response?.text?.trim();
+    return summary || localSummarize(text);
   } catch (error) {
-    console.error('OpenAI summary error:', error.message);
+    console.error('Gemini summary error:', error.message);
     return localSummarize(text);
   }
 };
 
-// Generate quiz questions from lesson text using OpenAI (or fallback)
+const QUIZ_SCHEMA = {
+  type: 'ARRAY',
+  items: {
+    type: 'OBJECT',
+    properties: {
+      question: { type: 'STRING' },
+      options: { type: 'ARRAY', items: { type: 'STRING' } },
+      correctIndex: { type: 'INTEGER' },
+    },
+    required: ['question', 'options', 'correctIndex'],
+  },
+};
+
+// Generate quiz questions from lesson text using Gemini (or fallback)
 const generateQuiz = async (text) => {
-  if (!hasOpenAI()) {
+  if (!hasGemini()) {
     return localGenerateQuiz(text);
   }
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert quiz creator. Generate 4 multiple-choice questions based on the lesson content provided. Respond ONLY with valid JSON in this exact format: [{"question":"...","options":["a","b","c","d"],"correctIndex":0}] where correctIndex is the index of the correct option. Ensure exactly 4 options per question.',
-        },
-        { role: 'user', content: text.slice(0, 12000) },
-      ],
-      temperature: 0.5,
+    const response = await getClient().models.generateContent({
+      model: getModel(),
+      contents: text.slice(0, 12000),
+      config: {
+        systemInstruction:
+          'You are an expert quiz creator. Generate 4 multiple-choice questions based on the lesson content provided. Each question must have exactly 4 options and correctIndex must be the index of the correct option (0-based).',
+        temperature: 0.5,
+        responseMimeType: 'application/json',
+        responseSchema: QUIZ_SCHEMA,
+      },
     });
-    const content = response.choices[0]?.message?.content?.trim() || '';
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return localGenerateQuiz(text);
-    const parsed = JSON.parse(jsonMatch[0]);
+
+    let parsed = null;
+    if (response && response.parsed) {
+      parsed = response.parsed;
+    } else {
+      const raw = response?.text?.trim() || '';
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+    }
+
     if (!Array.isArray(parsed) || parsed.length === 0) return localGenerateQuiz(text);
     return parsed
       .filter((q) => q && q.question && Array.isArray(q.options) && q.options.length >= 2)
@@ -115,7 +133,7 @@ const generateQuiz = async (text) => {
         correctIndex: Number(q.correctIndex) || 0,
       }));
   } catch (error) {
-    console.error('OpenAI quiz error:', error.message);
+    console.error('Gemini quiz error:', error.message);
     return localGenerateQuiz(text);
   }
 };
@@ -124,5 +142,6 @@ module.exports = {
   extractTextFromPdf,
   generateSummary,
   generateQuiz,
-  hasOpenAI,
+  hasGemini,
+  localSummarize,
 };

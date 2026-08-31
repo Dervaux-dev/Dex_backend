@@ -21,7 +21,7 @@ const courseSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['mathematics', 'science', 'english', 'social-studies', 'creative-arts', 'ict', 'programming', 'other'],
+    enum: ['mathematics', 'science', 'english', 'social-studies', 'creative-arts', 'ict', 'programming', 'french', 'kinyarwanda', 'music', 'physical-education', 'other'],
     default: 'mathematics'
   },
   level: {
