@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "seed:admin": "node utils/seedAdmin.js",
     "seed:courses": "node utils/seedPrimaryCourses.js",
+    "seed:pdfs": "node utils/seedPdfCourses.js",
     "test": "jest"
   },
   "dependencies": {
@@ -22,7 +23,7 @@
     "helmet": "^7.0.0",
     "express-rate-limit": "^6.10.0",
     "pdf-parse": "^1.1.1",
-    "openai": "^4.47.0"
+    "@google/genai": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
