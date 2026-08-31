@@ -182,9 +182,28 @@ const getQuizResults = async (req, res, next) => {
   }
 };
 
+// Bulk: check quiz existence for many lessons at once (used by chapter list sidebar)
+const getBulkLessonQuizStatus = async (req, res, next) => {
+  try {
+    const { lessonIds } = req.body;
+    if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'lessonIds array is required' });
+    }
+    const quizzes = await Quiz.find({ lesson: { $in: lessonIds } }).select('_id lesson');
+    const statusMap = {};
+    quizzes.forEach((q) => {
+      statusMap[q.lesson.toString()] = { hasQuiz: true, quizId: q._id };
+    });
+    res.status(200).json({ success: true, data: statusMap });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createQuiz,
   getQuizByLesson,
+  getBulkLessonQuizStatus,
   getQuizAdmin,
   updateQuiz,
   submitQuiz,
