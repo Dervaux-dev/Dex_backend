@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createQuiz,
   getQuizByLesson,
+  getBulkLessonQuizStatus,
   getQuizAdmin,
   updateQuiz,
   submitQuiz,
@@ -14,6 +15,7 @@ const { auth, adminAuth } = require('../middleware/auth');
 // Student routes (authenticated)
 router.get('/lesson/:lessonId', auth, getQuizByLesson);
 router.get('/lesson/:lessonId/results', auth, getQuizResults);
+router.post('/bulk-status', auth, getBulkLessonQuizStatus);
 router.post('/:id/submit', auth, submitQuiz);
 
 // Admin routes

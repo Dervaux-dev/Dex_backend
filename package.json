@@ -9,6 +9,7 @@
     "seed:admin": "node utils/seedAdmin.js",
     "seed:courses": "node utils/seedPrimaryCourses.js",
     "seed:pdfs": "node utils/seedPdfCourses.js",
+    "seed:quizzes": "node utils/seedQuizzes.js",
     "test": "jest"
   },
   "dependencies": {
