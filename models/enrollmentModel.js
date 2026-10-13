@@ -23,6 +23,10 @@ const enrollmentSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  completedLessons: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson'
+  }],
   enrolledAt: {
     type: Date,
     default: Date.now
@@ -39,4 +43,3 @@ enrollmentSchema.index({ user: 1, course: 1 }, { unique: true });
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);
 
 module.exports = Enrollment;
-

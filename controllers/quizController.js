@@ -24,7 +24,7 @@ const createQuiz = async (req, res, next) => {
     }
 
     // Generate questions from lesson raw text
-    const questions = await generateQuiz(lesson.rawText || lesson.summary || '');
+    const questions = await generateQuiz(lesson.rawText || lesson.summary || '', lesson.aiProvider || 'gemini');
 
     const quiz = await Quiz.create({
       lesson: lessonId,
@@ -141,6 +141,29 @@ const submitQuiz = async (req, res, next) => {
       passed,
     });
 
+    // Automatically recalculate and sync student course progress
+    let courseProgress = null;
+    if (quiz.course) {
+      const { recalculateCourseProgress } = require('../utils/progressHelper');
+      const updatedEnrollment = await recalculateCourseProgress(userId, quiz.course);
+      if (updatedEnrollment) {
+        courseProgress = {
+          progress: updatedEnrollment.progress,
+          status: updatedEnrollment.status,
+        };
+      }
+    }
+
+    // Build question review feedback
+    const feedback = quiz.questions.map((q, idx) => ({
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      userAnswer: answers[idx],
+      isCorrect: answers[idx] === q.correctIndex,
+      explanation: q.explanation || `The correct answer is: ${q.options[q.correctIndex]}`,
+    }));
+
     res.status(200).json({
       success: true,
       data: {
@@ -152,6 +175,8 @@ const submitQuiz = async (req, res, next) => {
           total: quiz.questions.length,
           passingScore: quiz.passingScore,
         },
+        courseProgress,
+        feedback,
       },
     });
   } catch (error) {
@@ -209,4 +234,3 @@ module.exports = {
   submitQuiz,
   getQuizResults,
 };
-
