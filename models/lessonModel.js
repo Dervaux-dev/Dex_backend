@@ -28,6 +28,11 @@ const lessonSchema = new mongoose.Schema({
     type: String,
     default: '', // external PDF URL, e.g. phone-hosted or shared link
   },
+  aiProvider: {
+    type: String,
+    enum: ['gemini', 'anthropic'],
+    default: 'gemini',
+  },
   summary: {
     type: String,
     default: '',
@@ -39,6 +44,14 @@ const lessonSchema = new mongoose.Schema({
     vocabulary: { type: [{ term: String, definition: String }], default: [] },
     keyFacts: { type: [String], default: [] },
     _id: false,
+  },
+  readingTime: {
+    type: Number,
+    default: 5, // estimated reading time in minutes
+  },
+  wordCount: {
+    type: Number,
+    default: 0,
   },
   rawText: {
     type: String,

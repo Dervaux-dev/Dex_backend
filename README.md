@@ -98,6 +98,14 @@ backend/
 
 The server will start on `http://localhost:5000`
 
+## PDF lessons and AI providers
+
+The admin lesson page uploads the selected PDF to the backend. `pdf-parse` extracts selectable text; the backend sends that text to the AI provider selected on the upload form and stores the summary, study notes, extracted text, and provider with the lesson. Quiz generation later uses the same provider.
+
+Gemini remains the default. To use Anthropic, add your key to `Dex_backend/.env` (copy `.env.example` if needed), set `ANTHROPIC_API_KEY`, and restart the backend. You can optionally set `ANTHROPIC_MODEL`; it defaults to `claude-sonnet-5-5`. Never put the Anthropic key in frontend code, Vite environment variables, or a public folder.
+
+`pdf-parse` extracts text from text-based PDFs. Scanned/image-only PDFs need OCR before this flow can generate lesson content. A URL entered in the optional PDF URL field is currently stored as a reference; the backend does not download and parse the remote PDF.
+
 ## API Endpoints
 
 ### Authentication
