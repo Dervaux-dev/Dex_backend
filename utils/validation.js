@@ -25,13 +25,21 @@ const validateUserRegistration = [
     .withMessage('Please provide a valid email'),
 
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one symbol'),
 
   handleValidationErrors
 ];
+
+// Reusable strong-password rule for other endpoints (e.g. change password)
+const strongPassword = (fieldName = 'newPassword') =>
+  body(fieldName)
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one symbol');
 
 const validateUserLogin = [
   body('identifier')
@@ -127,6 +135,7 @@ const validateQuestionCreation = [
 ];
 
 module.exports = {
+  strongPassword,
   validateUserRegistration,
   validateUserLogin,
   validateCourseCreation,

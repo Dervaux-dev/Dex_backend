@@ -66,8 +66,12 @@ const changePassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Current password and new password are required' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters long' });
+    const isStrong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(newPassword);
+    if (!isStrong) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol',
+      });
     }
 
     const user = await User.findById(req.user._id);
