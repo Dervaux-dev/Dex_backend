@@ -145,9 +145,16 @@ app.get('/sitemap.xml', async (req, res, next) => {
 });
 
 // Serve static files from the React/Vite build folder when the production bundle exists.
-const frontendPath = path.resolve(__dirname, '../frontend/dist');
+const potentialFrontendPaths = [
+  path.resolve(__dirname, '../Dex_frontend/dist'),
+  path.resolve(__dirname, '../frontend/dist'),
+  path.resolve(__dirname, './dist'),
+  path.resolve(__dirname, '../dist'),
+];
 
-if (fs.existsSync(frontendPath)) {
+const frontendPath = potentialFrontendPaths.find((p) => fs.existsSync(path.join(p, 'index.html'))) || potentialFrontendPaths[0];
+
+if (fs.existsSync(path.join(frontendPath, 'index.html'))) {
   app.use(express.static(frontendPath));
 
   app.get(/^\/(?!api).*/, (req, res) => {
