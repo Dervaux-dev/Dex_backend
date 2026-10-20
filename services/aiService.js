@@ -43,17 +43,24 @@ const generateWithAnthropic = async ({ text, system, maxTokens, temperature = 0.
     messages: [{ role: 'user', content: text }],
   });
 
+  const headers = {
+    'Content-Type': 'application/json',
+    'Content-Length': Buffer.byteLength(payload),
+    'x-api-key': process.env.ANTHROPIC_API_KEY,
+    'anthropic-version': '2023-06-01',
+  };
+
+  // Workspace-scoped API keys require the target workspace to be specified.
+  if (process.env.ANTHROPIC_WORKSPACE_ID) {
+    headers['anthropic-workspace-id'] = process.env.ANTHROPIC_WORKSPACE_ID;
+  }
+
   const response = await new Promise((resolve, reject) => {
     const request = https.request({
       hostname: 'api.anthropic.com',
       path: '/v1/messages',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
+      headers,
       timeout: 60000,
     }, (res) => {
       let body = '';
@@ -446,11 +453,11 @@ const generateSummary = async (text, requestedProvider = 'gemini') => {
       return summary;
     } catch (error) {
       console.error('Anthropic summary error:', error.message);
-      throw error;
+      if (!hasGemini()) {
+        return localSummarize(compressed);
+      }
     }
-  }
-
-  if (!hasGemini()) {
+  } else if (!hasGemini()) {
     return localSummarize(compressed);
   }
 
@@ -523,11 +530,11 @@ const generateQuiz = async (text, requestedProvider = 'gemini') => {
       return questions;
     } catch (error) {
       console.error('Anthropic quiz error:', error.message);
-      throw error;
+      if (!hasGemini()) {
+        return localGenerateQuiz(compressed);
+      }
     }
-  }
-
-  if (!hasGemini()) {
+  } else if (!hasGemini()) {
     return localGenerateQuiz(compressed);
   }
 
@@ -603,11 +610,11 @@ const generateStudyNotes = async (text, requestedProvider = 'gemini') => {
       };
     } catch (error) {
       console.error('Anthropic study-notes error:', error.message);
-      throw error;
+      if (!hasGemini()) {
+        return localStudyNotes(compressed);
+      }
     }
-  }
-
-  if (!hasGemini()) {
+  } else if (!hasGemini()) {
     return localStudyNotes(compressed);
   }
 
@@ -739,11 +746,20 @@ const generateCourseOutline = async (text, requestedProvider = 'gemini') => {
       return parsed;
     } catch (error) {
       console.error('Anthropic outline error:', error.message);
-      throw error;
+      if (hasGemini()) {
+        // fall through to Gemini below
+      } else {
+        return [
+          {
+            chapter: 1,
+            title: 'Core Fundamentals',
+            objectives: ['Master the key concepts and vocabulary of this topic'],
+            keyTopics: ['Introduction', 'Core Methods', 'Practical Applications'],
+          },
+        ];
+      }
     }
-  }
-
-  if (!hasGemini()) {
+  } else if (!hasGemini()) {
     return [
       {
         chapter: 1,
@@ -825,11 +841,17 @@ const generateLessonFromSection = async (sectionText, chapterMeta = {}, requeste
       };
     } catch (error) {
       console.error('Anthropic section lesson error:', error.message);
-      throw error;
+      if (hasGemini()) {
+        // fall through to Gemini below
+      } else {
+        return {
+          summary: localSummarize(compressed),
+          studyNotes: localStudyNotes(compressed),
+          quiz: localGenerateQuiz(compressed),
+        };
+      }
     }
-  }
-
-  if (!hasGemini()) {
+  } else if (!hasGemini()) {
     return {
       summary: localSummarize(compressed),
       studyNotes: localStudyNotes(compressed),
