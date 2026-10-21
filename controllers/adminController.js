@@ -156,10 +156,10 @@ const createUser = async (req, res, next) => {
   }
 };
 
-// Update user role or active status
+// Update user role, active status, or reset password
 const updateUser = async (req, res, next) => {
   try {
-    const { role, isActive, fullname, email } = req.body;
+    const { role, isActive, fullname, email, password } = req.body;
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -168,6 +168,13 @@ const updateUser = async (req, res, next) => {
 
     if (user._id.toString() === req.user._id.toString()) {
       return res.status(400).json({ success: false, message: 'You cannot modify your own account from here' });
+    }
+
+    if (password !== undefined) {
+      if (typeof password !== 'string' || password.length < 6) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+      }
+      user.password = await bcrypt.hash(password, 7);
     }
 
     if (role !== undefined) {

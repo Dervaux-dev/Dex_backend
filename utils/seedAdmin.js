@@ -13,10 +13,20 @@ const seed = async () => {
   try {
     await connectDB();
 
-    // Customize these credentials before running.
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@dexelearning.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@12345';
+    // Set these in .env before running — there is no default password.
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
     const adminFullname = process.env.ADMIN_FULLNAME || 'Platform Admin';
+
+    if (!adminEmail || !adminPassword) {
+      console.error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env before seeding the first admin account.');
+      process.exit(1);
+    }
+
+    if (adminPassword.length < 6) {
+      console.error('ADMIN_PASSWORD must be at least 6 characters.');
+      process.exit(1);
+    }
 
     const existing = await User.findOne({ email: adminEmail.toLowerCase().trim() });
     if (existing) {
@@ -42,7 +52,6 @@ const seed = async () => {
 
     console.log('Admin account created successfully:');
     console.log(`  Email:    ${adminEmail.toLowerCase().trim()}`);
-    console.log(`  Password: ${adminPassword}`);
     console.log('You can now log in and access /admin (Admin Portal).');
     process.exit(0);
   } catch (err) {
