@@ -9,6 +9,7 @@ const connectDB = require('./config/database');
 const { errorHandler } = require('./middleware/errorHandler');
 const registerRoutes = require('./routes/registerRoutes');
 const loginRoutes = require('./routes/loginRoutes');
+const passwordRoutes = require('./routes/passwordRoutes');
 const userRoutes = require('./routes/userRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const lessonRoutes = require('./routes/lessonRoutes');
@@ -68,6 +69,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // API Routes
 app.use('/api/register', registerRoutes);
 app.use('/api/login', loginRoutes);
+app.use('/api/auth', passwordRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
