@@ -28,7 +28,13 @@ const registerSchema = new mongoose.Schema({
     enrolledCourses: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course'
-    }]
+    }],
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    }
 }, { timestamps: true });
 
 //create register model

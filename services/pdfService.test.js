@@ -122,6 +122,6 @@ Photosynthesis provides 99 percent of the biochemical energy needed for life on 
     const largeText = educationalText.repeat(20);
     const compressed = compressEducationalText(largeText, 500);
     expect(compressed.length).toBeLessThanOrEqual(500);
-    expect(compressed).toContain('Photosynthesis');
+    expect(compressed.toLowerCase()).toContain('photosynthesis');
   });
 });

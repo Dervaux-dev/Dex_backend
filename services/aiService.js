@@ -1,7 +1,32 @@
 // AI service for generating lesson content with Gemini or Anthropic.
 // Falls back to high-yield local NLP algorithms when AI providers are unavailable.
-const https = require('https');
 const { cleanPdfText, extractAndCleanPdf, computeTextStats } = require('./pdfService');
+const https = require('https');
+const stripBoilerplate = (text = '') => {
+  if (!text) return '';
+  let t = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = t.split('\n');
+  const counts = new Map();
+  for (const l of lines) {
+    const k = l.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (k.length < 20) continue;
+    const parts = k.split(' ').filter(Boolean);
+    if (parts.length < 5) continue;
+    counts.set(k, (counts.get(k) || 0) + 1);
+  }
+  const repeat = new Set([...counts.entries()].filter(([, c]) => c >= 3).map(([k]) => k));
+  t = lines
+    .filter((l) => {
+      const k = l.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      if (repeat.has(k)) return false;
+      if (/^(in god we trust|rest we bring)/i.test(l)) return false;
+      return true;
+    })
+    .join('\n');
+  // Remove any remaining exact watermark lines
+  t = t.replace(/^\s*in god we trust.*$/gim, '').replace(/^\s*the rest we bring.*$/gim, '');
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+};
 
 // Load provider SDKs dynamically so local fallbacks still work without AI packages.
 let GoogleGenAI = null;
@@ -207,7 +232,7 @@ const compressEducationalText = (rawText = '', maxChars = 14000) => {
 
 // ── Local Fallback Summarizer (TF-IDF / Frequency-Weighted Extractive) ───────
 const localSummarize = (text) => {
-  const cleaned = cleanPdfText(text);
+  const cleaned = stripBoilerplate(cleanPdfText(text));
   if (!cleaned) return 'No content available for this lesson.';
 
   const sentences = tokenizeSentences(cleaned);
@@ -230,7 +255,7 @@ const localSummarize = (text) => {
 
 // ── Local Fallback Study Notes Generator ────────────────────────────────────
 const localStudyNotes = (text) => {
-  const cleaned = cleanPdfText(text);
+  const cleaned = stripBoilerplate(cleanPdfText(text));
   if (!cleaned) return { overview: '', keyPoints: [], vocabulary: [], keyFacts: [] };
 
   const sentences = tokenizeSentences(cleaned);
@@ -318,7 +343,7 @@ const localStudyNotes = (text) => {
 
 // ── Local Fallback Quiz Generator (Pedagogically Valid Distractors) ─────────
 const localGenerateQuiz = (text) => {
-  const cleaned = cleanPdfText(text);
+  const cleaned = stripBoilerplate(cleanPdfText(text));
   if (!cleaned) return [];
 
   const sentences = tokenizeSentences(cleaned);
@@ -580,7 +605,7 @@ const generateQuiz = async (text, requestedProvider = 'gemini') => {
 // ── Study Notes Generator ───────────────────────────────────────────────────
 const generateStudyNotes = async (text, requestedProvider = 'gemini') => {
   const provider = normalizeProvider(requestedProvider);
-  const compressed = compressEducationalText(text, 14000);
+  const compressed = compressEducationalText(stripBoilerplate(text), 14000);
   const system =
     `You are an expert educator creating polished study notes for young learners. ` +
     `Analyze the lesson content and return only valid JSON with: ` +
