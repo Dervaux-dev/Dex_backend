@@ -156,7 +156,8 @@ const getLessonsByCourse = async (req, res, next) => {
   try {
     const lessons = await Lesson.find({ course: req.params.courseId })
       .sort({ chapter: 1 })
-      .select('-rawText');
+      .select('-rawText')
+      .lean();
 
     let completedLessons = [];
     let progress = 0;
@@ -204,7 +205,7 @@ const getLessonsByCourse = async (req, res, next) => {
 // Get a single lesson (summary + pdf path)
 const getLessonById = async (req, res, next) => {
   try {
-    const lesson = await Lesson.findById(req.params.id).select('-rawText');
+    const lesson = await Lesson.findById(req.params.id).select('-rawText').lean();
     if (!lesson) {
       return res.status(404).json({ success: false, message: 'Lesson not found' });
     }

@@ -35,5 +35,9 @@ const courseSchema = new mongoose.Schema({
   rating: { type: ratingSchema, default: () => ({ average: 4.8, count: 15 }) }
 }, { timestamps: true });
 
+// Performance Indexes for fast grade filtering and sorting
+courseSchema.index({ gradeLevel: 1, category: 1 });
+courseSchema.index({ createdAt: -1 });
+
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;

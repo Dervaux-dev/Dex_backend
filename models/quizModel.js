@@ -50,6 +50,7 @@ const quizSchema = new mongoose.Schema(
 
 // One quiz per lesson
 quizSchema.index({ lesson: 1 }, { unique: true });
+quizSchema.index({ course: 1 });
 
 const Quiz = mongoose.model('Quiz', quizSchema);
 module.exports = Quiz;
