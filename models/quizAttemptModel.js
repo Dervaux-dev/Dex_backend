@@ -36,5 +36,9 @@ const quizAttemptSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Performance Indexes for fast quiz tracking and progress recalculation
+quizAttemptSchema.index({ user: 1, quiz: 1, passed: 1 });
+quizAttemptSchema.index({ user: 1, score: -1 });
+
 const QuizAttempt = mongoose.model('QuizAttempt', quizAttemptSchema);
 module.exports = QuizAttempt;

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const helmet = require('helmet'); 
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const connectDB = require('./config/database');
 const { errorHandler } = require('./middleware/errorHandler');
 const registerRoutes = require('./routes/registerRoutes');
@@ -30,6 +31,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: false,
   frameguard: false, // Allows iframe embedding for lesson PDF viewer
+}));
+
+// Performance: Enable Gzip/Brotli response compression (reduces JSON & asset size by 60-80%)
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
 }));
 
 // Enable CORS for your frontend origin (handles both preflight OPTIONS and regular requests)

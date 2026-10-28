@@ -11,8 +11,10 @@ const getAllCourses = async (req, res, next) => {
 
     const courses = await Course.find(filter)
       .sort(sort)
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .lean();
 
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
     res.status(200).json({
       success: true,
       data: {
@@ -28,13 +30,14 @@ const getAllCourses = async (req, res, next) => {
 const getCoursesGroupedByGrade = async (req, res, next) => {
   try {
     const grades = ['Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6'];
-    const allCourses = await Course.find().sort({ createdAt: -1 });
+    const allCourses = await Course.find().sort({ createdAt: -1 }).lean();
 
     const grouped = grades.map((grade) => ({
       gradeLevel: grade,
       courses: allCourses.filter((c) => c.gradeLevel === grade),
     }));
 
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
     res.status(200).json({
       success: true,
       data: { grades: grouped }
@@ -47,7 +50,7 @@ const getCoursesGroupedByGrade = async (req, res, next) => {
 
 const getCourseById = async (req, res, next) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).lean();
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
