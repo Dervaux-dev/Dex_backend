@@ -41,17 +41,14 @@ const recalculateCourseProgress = async (userId, courseId) => {
     const passedQuizSet = new Set(passedAttempts.map((a) => a.quiz.toString()));
     const passedQuizzesCount = passedQuizSet.size;
 
-    // Progress computation: weighted average of lessons read (40%) and quizzes passed (60%)
-    // Or equal weighting if only one category exists
+    // Progress computation: Every lesson read and quiz passed counts fairly
+    const totalItems = totalLessons + totalQuizzes;
     let progress = 0;
-    if (totalLessons > 0 && totalQuizzes > 0) {
-      const lessonRatio = completedLessonsCount / totalLessons;
-      const quizRatio = passedQuizzesCount / totalQuizzes;
-      progress = Math.round((lessonRatio * 40) + (quizRatio * 60));
+    if (totalItems > 0) {
+      const completedItems = completedLessonsCount + passedQuizzesCount;
+      progress = Math.round((completedItems / totalItems) * 100);
     } else if (totalLessons > 0) {
       progress = Math.round((completedLessonsCount / totalLessons) * 100);
-    } else if (totalQuizzes > 0) {
-      progress = Math.round((passedQuizzesCount / totalQuizzes) * 100);
     }
 
     progress = Math.max(0, Math.min(100, progress));

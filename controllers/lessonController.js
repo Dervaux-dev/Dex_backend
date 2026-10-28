@@ -160,6 +160,7 @@ const getLessonsByCourse = async (req, res, next) => {
 
     let completedLessons = [];
     let progress = 0;
+    let passedQuizzes = [];
 
     if (req.user && req.user._id) {
       const enrollment = await Enrollment.findOne({
@@ -170,6 +171,19 @@ const getLessonsByCourse = async (req, res, next) => {
         completedLessons = (enrollment.completedLessons || []).map((id) => id.toString());
         progress = enrollment.progress || 0;
       }
+
+      // Check quizzes passed by the student
+      const quizzes = await Quiz.find({ course: req.params.courseId }).select('_id lesson');
+      const quizIds = quizzes.map((q) => q._id);
+      if (quizIds.length > 0) {
+        const QuizAttempt = require('../models/quizAttemptModel');
+        const passedAttempts = await QuizAttempt.find({
+          user: req.user._id,
+          quiz: { $in: quizIds },
+          passed: true,
+        }).select('quiz lesson');
+        passedQuizzes = [...new Set(passedAttempts.map((a) => a.quiz.toString()))];
+      }
     }
 
     res.status(200).json({
@@ -178,6 +192,7 @@ const getLessonsByCourse = async (req, res, next) => {
         lessons,
         count: lessons.length,
         completedLessons,
+        passedQuizzes,
         progress,
       },
     });
@@ -212,15 +227,25 @@ const markLessonComplete = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'You are not enrolled in this course' });
     }
 
-    await Enrollment.findByIdAndUpdate(enrollment._id, {
-      $addToSet: { completedLessons: lesson._id },
-    });
+    const isAlreadyCompleted = (enrollment.completedLessons || []).some(
+      (id) => id.toString() === lesson._id.toString()
+    );
+
+    if (isAlreadyCompleted && req.body && req.body.toggle) {
+      await Enrollment.findByIdAndUpdate(enrollment._id, {
+        $pull: { completedLessons: lesson._id },
+      });
+    } else {
+      await Enrollment.findByIdAndUpdate(enrollment._id, {
+        $addToSet: { completedLessons: lesson._id },
+      });
+    }
 
     const updated = await recalculateCourseProgress(userId, lesson.course);
 
     res.status(200).json({
       success: true,
-      message: 'Lesson marked as completed',
+      message: isAlreadyCompleted && req.body && req.body.toggle ? 'Lesson unmarked' : 'Lesson marked as completed',
       data: {
         progress: updated ? updated.progress : enrollment.progress,
         status: updated ? updated.status : enrollment.status,
@@ -236,13 +261,21 @@ const markLessonComplete = async (req, res, next) => {
 const getLessonPdf = async (req, res, next) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
-    if (!lesson || !lesson.pdfPath) {
-      return res.status(404).json({ success: false, message: 'PDF not found' });
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    if (lesson.pdfUrl) {
+      return res.redirect(lesson.pdfUrl);
+    }
+    if (!lesson.pdfPath) {
+      return res.status(404).json({ success: false, message: 'PDF file not found for this lesson' });
     }
     const filePath = path.join(uploadsDir, lesson.pdfPath);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: 'PDF file not found on disk' });
     }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(lesson.pdfFile || 'lesson.pdf')}"`);
     res.sendFile(filePath);
   } catch (error) {
     next(error);
