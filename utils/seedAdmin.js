@@ -41,7 +41,7 @@ const seed = async () => {
       process.exit(0);
     }
 
-    const hashedPassword = await bcrypt.hash(adminPassword, 7);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     await User.create({
       fullname: adminFullname,
       email: adminEmail.toLowerCase().trim(),

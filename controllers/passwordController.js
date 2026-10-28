@@ -73,7 +73,7 @@ const resetPassword = async (req, res, next) => {
       });
     }
 
-    user.password = await bcrypt.hash(password, 7);
+    user.password = await bcrypt.hash(password, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();

@@ -16,15 +16,23 @@ const handleValidationErrors = (req, res, next) => {
 // User validation rules
 const validateUserRegistration = [
   body('fullname')
+    .isString()
+    .withMessage('Full name must be a string')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Full name must be between 2 and 100 characters'),
 
   body('email')
+    .isString()
+    .withMessage('Email must be a string')
+    .trim()
     .isEmail()
+    .normalizeEmail()
     .withMessage('Please provide a valid email'),
 
   body('password')
+    .isString()
+    .withMessage('Password must be a string')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
@@ -36,6 +44,8 @@ const validateUserRegistration = [
 // Reusable strong-password rule for other endpoints (e.g. change password)
 const strongPassword = (fieldName = 'newPassword') =>
   body(fieldName)
+    .isString()
+    .withMessage(`${fieldName} must be a string`)
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
@@ -43,10 +53,15 @@ const strongPassword = (fieldName = 'newPassword') =>
 
 const validateUserLogin = [
   body('identifier')
+    .isString()
+    .withMessage('Email or full name must be a string')
+    .trim()
     .notEmpty()
     .withMessage('Email or full name is required'),
 
   body('password')
+    .isString()
+    .withMessage('Password must be a string')
     .notEmpty()
     .withMessage('Password is required'),
 

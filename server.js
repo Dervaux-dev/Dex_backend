@@ -23,12 +23,14 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
   .map((origin) => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
-// Security middleware. Disable CSP for local development so browser/devtools requests
-// are not blocked by overstrict headers.
-//app.use(helmet({
- // crossOriginResourcePolicy: { policy: "cross-origin" },
-  //contentSecurityPolicy: false,
-//}));
+// Hardened Security Headers using Helmet
+// Disables CSP to prevent breaking dev/Vercel asset bundling, enables cross-origin resource policy for PDF/media
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false,
+  frameguard: false, // Allows iframe embedding for lesson PDF viewer
+}));
 
 // Enable CORS for your frontend origin (handles both preflight OPTIONS and regular requests)
 app.use(cors({
@@ -51,7 +53,7 @@ app.use(cors({
   maxAge: 86400,
 }));
 
-// Rate limiting to prevent brute force and DoS attacks
+// General Rate limiting to prevent brute force and DoS attacks
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500,
@@ -62,22 +64,38 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Strict Rate Limiting on Authentication & Password Recovery Endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Max 20 attempts per IP per 15 min window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many authentication attempts from this IP. Please try again after 15 minutes.',
+  },
+  skip: (req) => req.method === 'OPTIONS',
+});
+
 // Body parsing with size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// API Routes
-app.use('/api/register', registerRoutes);
-app.use('/api/login', loginRoutes);
-app.use('/api/auth', passwordRoutes);
+// Import auth middleware to protect static uploads
+const { auth } = require('./middleware/auth');
+
+// API Routes with dedicated security rate limiters
+app.use('/api/register', authLimiter, registerRoutes);
+app.use('/api/login', authLimiter, loginRoutes);
+app.use('/api/auth', authLimiter, passwordRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Serve uploaded PDF files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Secure uploaded PDF files (Requires authentication; unauthenticated direct access blocked)
+app.use('/uploads', auth, express.static(path.join(__dirname, 'uploads')));
 
 
 

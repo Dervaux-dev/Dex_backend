@@ -15,11 +15,15 @@ const loginUser = async (req, res, next) => {
       });
     }
 
-    // Find user by email or fullname (case-insensitive)
+    // Safely escape any regex characters to prevent ReDoS and regex injection attacks
+    const escapeRegex = (text) => String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cleanId = String(identifier || '').trim();
+
+    // Find user by email or fullname (case-insensitive and safely escaped)
     const user = await User.findOne({
       $or: [
-        { email: identifier.toLowerCase().trim() },
-        { fullname: { $regex: new RegExp(`^${identifier.trim()}$`, 'i') } }
+        { email: cleanId.toLowerCase() },
+        { fullname: { $regex: new RegExp(`^${escapeRegex(cleanId)}$`, 'i') } }
       ]
     });
 

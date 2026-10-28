@@ -128,7 +128,7 @@ const createUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'A user with this email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 7);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       fullname: fullname.trim(),
@@ -174,7 +174,7 @@ const updateUser = async (req, res, next) => {
       if (typeof password !== 'string' || password.length < 6) {
         return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
       }
-      user.password = await bcrypt.hash(password, 7);
+      user.password = await bcrypt.hash(password, 10);
     }
 
     if (role !== undefined) {
