@@ -106,6 +106,26 @@ Gemini remains the default. To use Anthropic, add your key to `Dex_backend/.env`
 
 `pdf-parse` extracts text from text-based PDFs. Scanned/image-only PDFs need OCR before this flow can generate lesson content. A URL entered in the optional PDF URL field is currently stored as a reference; the backend does not download and parse the remote PDF.
 
+## Importing structured REB primary books
+
+The structured importer adds REB Pupil Book curriculum courses and lessons without replacing existing courses, lessons, quizzes, or learner progress. It imports the unit/lesson JSON from `pdfs/primary/_structured` and links lessons to the original book PDF.
+
+Run a dry run for one book first (dry run is the default):
+
+```bash
+npm run import:structured -- --grade P1 --subject english
+```
+
+Apply the P1 English pilot:
+
+```bash
+npm run import:structured -- --grade P1 --subject english --apply
+```
+
+After reviewing the pilot in Dex, import all available Pupil Books with `--all-books --apply`. The importer is additive and idempotent: existing importer-owned lessons are preserved on reruns; `--refresh-owned` is an explicit opt-in to refresh those lessons from the current structured JSON. Books without detectable lesson headings are imported as one lesson per unit, preserving their source text.
+
+Set `REB_PRIMARY_ROOT` if the curriculum files are not under the workspace's `pdfs/primary` directory. The importer uses the existing `MONGODB_URI` configuration only when `--apply` is passed.
+
 ## API Endpoints
 
 ### Authentication

@@ -9,6 +9,7 @@
     "seed:admin": "node utils/seedAdmin.js",
     "seed:courses": "node utils/seedPrimaryCourses.js",
     "seed:pdfs": "node utils/seedPdfCourses.js",
+    "import:structured": "node utils/importStructuredPrimary.js",
     "seed:quizzes": "node utils/seedQuizzes.js",
     "fix:quizzes": "node utils/fixQuizzes.js",
     "notes:backfill": "node utils/backfillStudyNotes.js",

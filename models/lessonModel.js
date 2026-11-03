@@ -12,9 +12,29 @@ const lessonSchema = new mongoose.Schema({
     required: true,
     min: 1,
   },
+  curriculumUnitNumber: {
+    type: Number,
+    min: 1,
+  },
+  curriculumUnitTitle: {
+    type: String,
+    default: '',
+  },
+  curriculumLessonNumber: {
+    type: String,
+    default: '',
+  },
+  curriculumSourceId: {
+    type: String,
+    default: undefined,
+  },
   title: {
     type: String,
     required: true,
+  },
+  content: {
+    type: String,
+    default: '',
   },
   pdfFile: {
     type: String,
@@ -30,7 +50,7 @@ const lessonSchema = new mongoose.Schema({
   },
   aiProvider: {
     type: String,
-    enum: ['gemini', 'anthropic'],
+    enum: ['gemini', 'anthropic', 'local'],
     default: 'gemini',
   },
   summary: {
@@ -61,6 +81,7 @@ const lessonSchema = new mongoose.Schema({
 
 // A course can have multiple lessons, unique per chapter
 lessonSchema.index({ course: 1, chapter: 1 }, { unique: true });
+lessonSchema.index({ curriculumSourceId: 1 }, { unique: true, sparse: true });
 
 const Lesson = mongoose.model('Lesson', lessonSchema);
 module.exports = Lesson;

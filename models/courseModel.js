@@ -32,12 +32,14 @@ const courseSchema = new mongoose.Schema({
   price: { type: Number, default: 0 },
   thumbnailEmoji: { type: String, default: '📚' },
   instructor: { type: instructorSchema, required: true },
-  rating: { type: ratingSchema, default: () => ({ average: 4.8, count: 15 }) }
+  rating: { type: ratingSchema, default: () => ({ average: 4.8, count: 15 }) },
+  curriculumSourceId: { type: String, default: undefined }
 }, { timestamps: true });
 
 // Performance Indexes for fast grade filtering and sorting
 courseSchema.index({ gradeLevel: 1, category: 1 });
 courseSchema.index({ createdAt: -1 });
+courseSchema.index({ curriculumSourceId: 1 }, { unique: true, sparse: true });
 
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;
