@@ -1,5 +1,5 @@
 #create docker file for nodejs application
-FROM node:20-alpine
+FROM node:26-alpine
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -17,4 +17,5 @@ EXPOSE 5000
 
 # Start the app
 CMD ["npm", "start"]
+
 
