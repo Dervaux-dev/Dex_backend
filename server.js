@@ -11,6 +11,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const registerRoutes = require('./routes/registerRoutes');
 const loginRoutes = require('./routes/loginRoutes');
 const passwordRoutes = require('./routes/passwordRoutes');
+const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const userRoutes = require('./routes/userRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const lessonRoutes = require('./routes/lessonRoutes');
@@ -98,6 +99,11 @@ const { auth } = require('./middleware/auth');
 app.use('/api/register', authLimiter, registerRoutes);
 app.use('/api/login', authLimiter, loginRoutes);
 app.use('/api/auth', authLimiter, passwordRoutes);
+
+// Step 2: Password Reset Endpoints (/password-reset and /api/password-reset)
+app.use('/password-reset', authLimiter, passwordResetRoutes);
+app.use('/api/password-reset', authLimiter, passwordResetRoutes);
+
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
