@@ -12,7 +12,11 @@ const {
   generateLessonFromSection,
 } = require('../services/aiService');
 const { extractAndCleanPdf, computeTextStats } = require('../services/pdfService');
-const { recalculateCourseProgress } = require('../utils/progressHelper');
+const {
+  clampProgress,
+  normalizeEnrollmentProgress,
+  recalculateCourseProgress,
+} = require('../utils/progressHelper');
 
 // Ensure uploads dir exists
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -169,8 +173,9 @@ const getLessonsByCourse = async (req, res, next) => {
         course: req.params.courseId,
       });
       if (enrollment) {
+        await normalizeEnrollmentProgress(enrollment);
         completedLessons = (enrollment.completedLessons || []).map((id) => id.toString());
-        progress = enrollment.progress || 0;
+        progress = enrollment.progress;
       }
 
       // Check quizzes passed by the student
@@ -248,7 +253,7 @@ const markLessonComplete = async (req, res, next) => {
       success: true,
       message: isAlreadyCompleted && req.body && req.body.toggle ? 'Lesson unmarked' : 'Lesson marked as completed',
       data: {
-        progress: updated ? updated.progress : enrollment.progress,
+        progress: updated ? updated.progress : clampProgress(enrollment.progress),
         status: updated ? updated.status : enrollment.status,
         completedLessons: updated ? updated.completedLessons : enrollment.completedLessons,
       },

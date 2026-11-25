@@ -3,6 +3,33 @@ const Lesson = require('../models/lessonModel');
 const Quiz = require('../models/quizModel');
 const QuizAttempt = require('../models/quizAttemptModel');
 
+const clampProgress = (value) => {
+  const progress = Number(value);
+  if (!Number.isFinite(progress)) return 0;
+  return Math.min(100, Math.max(0, Math.round(progress)));
+};
+
+const normalizeEnrollmentProgress = async (enrollment) => {
+  let progress = clampProgress(enrollment.progress);
+  if (enrollment.status === 'completed') progress = 100;
+
+  let changed = progress !== enrollment.progress;
+  if (progress === 100 && enrollment.status === 'active') {
+    enrollment.status = 'completed';
+    changed = true;
+  }
+  if (progress === 100 && !enrollment.completedAt && enrollment.status === 'completed') {
+    enrollment.completedAt = new Date();
+    changed = true;
+  }
+  if (progress !== enrollment.progress) {
+    enrollment.progress = progress;
+  }
+
+  if (changed) await enrollment.save();
+  return enrollment;
+};
+
 /**
  * Calculates and updates user's enrollment progress for a specific course.
  */
@@ -51,7 +78,7 @@ const recalculateCourseProgress = async (userId, courseId) => {
       progress = Math.round((completedLessonsCount / totalLessons) * 100);
     }
 
-    progress = Math.max(0, Math.min(100, progress));
+    progress = clampProgress(progress);
     enrollment.progress = progress;
 
     if (progress >= 100) {
@@ -71,5 +98,7 @@ const recalculateCourseProgress = async (userId, courseId) => {
 };
 
 module.exports = {
+  clampProgress,
+  normalizeEnrollmentProgress,
   recalculateCourseProgress,
 };

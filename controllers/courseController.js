@@ -1,6 +1,7 @@
 const Course = require('../models/courseModel');
 const Enrollment = require('../models/enrollmentModel');
 const User = require('../models/registerModel');
+const { normalizeEnrollmentProgress } = require('../utils/progressHelper');
 
 const getAllCourses = async (req, res, next) => {
   try {
@@ -117,6 +118,7 @@ const getEnrolledCourses = async (req, res, next) => {
 
     const enrollments = await Enrollment.find({ user: userId, status: { $ne: 'dropped' } })
       .populate('course', 'title description category level price instructor rating');
+    await Promise.all(enrollments.map(normalizeEnrollmentProgress));
 
     res.status(200).json({
       success: true,

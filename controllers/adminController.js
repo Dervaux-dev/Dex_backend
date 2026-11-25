@@ -5,6 +5,7 @@ const Quiz = require('../models/quizModel');
 const Enrollment = require('../models/enrollmentModel');
 const QuizAttempt = require('../models/quizAttemptModel');
 const bcrypt = require('bcryptjs');
+const { normalizeEnrollmentProgress } = require('../utils/progressHelper');
 
 // Get dashboard statistics
 const getDashboardStats = async (req, res, next) => {
@@ -277,6 +278,7 @@ const listEnrollments = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .populate('user', 'fullname email')
       .populate('course', 'title category gradeLevel');
+    await Promise.all(enrollments.map(normalizeEnrollmentProgress));
 
     res.status(200).json({
       success: true,
